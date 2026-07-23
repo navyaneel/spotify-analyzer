@@ -110,6 +110,33 @@ popularity = clamp(
 ```
 where ε ~ N(0, 0.12) adds realistic noise, and danceability is weighted highest (0.3), reflecting real-world popularity trends.
 
+## Visualizations
+
+### Overview & Correlations
+KPI summary, popularity histogram by genre, and the 9×9 correlation heatmap between audio features and popularity.
+
+![Overview and Correlations](images/overview_correlations.png)
+
+### Genre Comparison
+Grouped bar chart and radar chart overlay comparing audio feature profiles across genres.
+
+![Genre Comparison](images/genre_comparison.png)
+
+### Clustering
+K-Means/DBSCAN cluster scatter plot with cluster profile comparison across audio features.
+
+![Clustering](images/clustering.png)
+
+### PCA
+2D/3D principal component projection with the feature loadings heatmap showing which audio features drive each axis.
+
+![PCA Projection](images/pca.png)
+
+### Predictive Modeling
+Actual vs. predicted popularity scatter plot and feature importance chart from the trained regression model.
+
+![Predictive Modeling](images/predictive_modeling.png)
+
 ## Methodology
 - **Reactive architecture**: Data is loaded once via `@st.cache_data`; sidebar filters build a boolean mask over the cached DataFrame; any widget change triggers a full re-run against cached data (no redundant reloads)
 - **Clustering (Tab 7)**: Features standardized via `StandardScaler` before fitting; K-Means uses `n_init=10, random_state=42` for reproducibility; DBSCAN labels noise points as cluster `-1`, shown transparently rather than hidden
