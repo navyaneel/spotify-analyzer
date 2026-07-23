@@ -1,0 +1,51 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Purpose}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Scope}{3}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Technology Stack}{3}{section.2}%
+\contentsline {section}{\numberline {3}Project Structure}{4}{section.3}%
+\contentsline {section}{\numberline {4}Data Model}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Dataset Schema}{4}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Supported Genres}{5}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Data Generation Algorithm}{5}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Genre-Specific Feature Distributions}{5}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Dashboard Architecture}{6}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Application Flow}{6}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Data Source Selection}{6}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Sidebar Controls}{7}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Tab Layout and Visualizations}{7}{subsection.5.4}%
+\contentsline {subsubsection}{\numberline {5.4.1}Tab 1: Overview}{8}{subsubsection.5.4.1}%
+\contentsline {subsubsection}{\numberline {5.4.2}Tab 2: Correlations}{8}{subsubsection.5.4.2}%
+\contentsline {subsubsection}{\numberline {5.4.3}Tab 3: Scatter Explorer}{8}{subsubsection.5.4.3}%
+\contentsline {subsubsection}{\numberline {5.4.4}Tab 4: Genre Comparison}{8}{subsubsection.5.4.4}%
+\contentsline {subsubsection}{\numberline {5.4.5}Tab 5: Trends Over Time}{8}{subsubsection.5.4.5}%
+\contentsline {subsubsection}{\numberline {5.4.6}Tab 6: Top Tracks}{9}{subsubsection.5.4.6}%
+\contentsline {subsubsection}{\numberline {5.4.7}Tab 7: Clustering}{9}{subsubsection.5.4.7}%
+\contentsline {subsubsection}{\numberline {5.4.8}Tab 8: PCA}{9}{subsubsection.5.4.8}%
+\contentsline {subsubsection}{\numberline {5.4.9}Tab 9: Predictive Modeling}{10}{subsubsection.5.4.9}%
+\contentsline {section}{\numberline {6}Kaggle Integration}{11}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Dataset Download via kagglehub}{11}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Automatic Column Mapping}{12}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Data Normalization Pipeline}{12}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Graceful Degradation}{12}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Spotify Web API Integration}{13}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Authentication}{13}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Retrieval Modes}{13}{subsection.7.2}%
+\contentsline {subsubsection}{\numberline {7.2.1}Playlist URL/ID}{13}{subsubsection.7.2.1}%
+\contentsline {subsubsection}{\numberline {7.2.2}Search Tracks}{14}{subsubsection.7.2.2}%
+\contentsline {subsubsection}{\numberline {7.2.3}Artist Discography}{14}{subsubsection.7.2.3}%
+\contentsline {subsection}{\numberline {7.3}API Data Pipeline}{14}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}URL Parsing}{15}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}Caching and Rate Limits}{15}{subsection.7.5}%
+\contentsline {subsection}{\numberline {7.6}Security Considerations}{15}{subsection.7.6}%
+\contentsline {section}{\numberline {8}Key Code Design}{15}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Data Loading and Caching}{15}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Filtering Pipeline}{16}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Correlation Analysis}{16}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}Radar Chart Construction}{16}{subsection.8.4}%
+\contentsline {section}{\numberline {9}Deployment and Execution}{17}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Prerequisites}{17}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Installation}{17}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}Data Generation}{17}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}Running the Dashboard}{17}{subsection.9.4}%
+\contentsline {section}{\numberline {10}Design Decisions and Trade-offs}{17}{section.10}%
+\contentsline {section}{\numberline {11}Future Enhancements}{18}{section.11}%

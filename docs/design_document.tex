@@ -1,0 +1,812 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{float}
+
+\definecolor{spotifygreen}{HTML}{1DB954}
+\definecolor{codebg}{HTML}{F5F5F5}
+\definecolor{codeframe}{HTML}{CCCCCC}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=spotifygreen!70!black,
+    urlcolor=spotifygreen!70!black,
+    citecolor=spotifygreen!70!black,
+}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{codeframe},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red!70!black},
+    commentstyle=\color{green!50!black}\itshape,
+    language=Python,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b,
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{gray}{Spotify Audio Feature Analysis Dashboard}}
+\fancyhead[R]{\small\textcolor{gray}{Design Document}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\Large\bfseries\color{spotifygreen!70!black}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\large\bfseries\color{spotifygreen!50!black}}{}{0em}{}
+
+\title{
+    \vspace{-1cm}
+    {\Huge\bfseries\textcolor{spotifygreen!70!black}{What Makes a Hit}}\\[0.5em]
+    {\Large Spotify Audio Feature Analysis Dashboard}\\[0.3em]
+    {\large Design Document}\\[1em]
+    \rule{\textwidth}{1.5pt}
+}
+\author{Navya Neelamegam\\School of Information Studies, Syracuse University}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Introduction}
+% =============================================================================
+
+This document describes the complete design of the \textbf{``What Makes a Hit''} Spotify Audio Feature Analysis Dashboard. The dashboard is an interactive web application built with Streamlit that enables users to explore how audio features such as energy, danceability, valence, acousticness, and others relate to song popularity across genres and time periods.
+
+\subsection{Purpose}
+The dashboard answers the question: \emph{What audio characteristics make a song popular?} It provides interactive visualizations that allow users to:
+\begin{itemize}[noitemsep]
+    \item Explore the distribution of popularity across genres
+    \item Identify correlations between audio features and popularity
+    \item Compare genre-specific audio profiles
+    \item Track feature trends over decades (1990--2024)
+    \item Discover top tracks filtered by custom criteria
+    \item Cluster tracks into natural groupings using K-Means or DBSCAN
+    \item Visualize the audio feature space in 2D/3D via PCA
+    \item Train regression models to predict popularity from audio features
+    \item Pull live data from the Spotify Web API or Kaggle
+\end{itemize}
+
+\subsection{Scope}
+The system comprises three components:
+\begin{enumerate}[noitemsep]
+    \item \textbf{Data Generation Module} (\texttt{generate\_data.py}) --- Produces a realistic synthetic dataset
+    \item \textbf{Dataset} (\texttt{data/spotify\_data.csv}) --- 5{,}000 track records with 14 columns
+    \item \textbf{Dashboard Application} (\texttt{app.py}) --- Interactive Streamlit web app with 9 analysis tabs
+\end{enumerate}
+
+% =============================================================================
+\section{Technology Stack}
+% =============================================================================
+
+\begin{table}[H]
+\centering
+\caption{Software Dependencies}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Package} & \textbf{Version} & \textbf{Role} \\
+\midrule
+Python        & 3.7+    & Runtime environment \\
+Streamlit     & 1.23.1  & Dashboard framework \\
+Pandas        & 1.3.5   & Data manipulation and analysis \\
+Plotly        & 5.18.0  & Interactive visualizations \\
+NumPy         & 1.21.6  & Numerical computations \\
+scikit-learn  & 1.0.2   & Clustering (K-Means, DBSCAN) and PCA \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All packages are installed to a user-specified directory (referred to as \texttt{<pkg\_install\_path>} throughout this document) and made available via the \texttt{PYTHONPATH} environment variable.
+
+\begin{table}[H]
+\centering
+\caption{Additional Dependencies}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Package} & \textbf{Version} & \textbf{Role} \\
+\midrule
+kagglehub & 0.2.9 & Download datasets from Kaggle \\
+spotipy   & 2.23.0 & Spotify Web API client library \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =============================================================================
+\section{Project Structure}
+% =============================================================================
+
+\begin{verbatim}
+navya/
+├── app.py                  # Main Streamlit dashboard application
+├── generate_data.py        # Synthetic dataset generator
+├── data/
+│   └── spotify_data.csv    # Generated dataset (5,000 tracks)
+└── docs/
+    └── design_document.tex # This document (LaTeX source)
+\end{verbatim}
+
+% =============================================================================
+\section{Data Model}
+% =============================================================================
+
+\subsection{Dataset Schema}
+
+The dataset contains 5{,}000 synthetic track records. Each record has 14 attributes described in Table~\ref{tab:schema}.
+
+\begin{longtable}{@{}llp{6.5cm}@{}}
+\caption{Dataset Schema (\texttt{spotify\_data.csv})} \label{tab:schema} \\
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\endhead
+\texttt{track\_name}        & string  & Song title generated from a word pool \\
+\texttt{artist}             & string  & Artist name selected per genre \\
+\texttt{genre}              & string  & One of 10 genres (see Section~\ref{sec:genres}) \\
+\texttt{release\_year}      & integer & Year of release (1990--2024) \\
+\texttt{popularity}         & integer & Popularity score (0--100) \\
+\texttt{danceability}       & float   & Suitability for dancing (0.0--1.0) \\
+\texttt{energy}             & float   & Perceptual intensity and activity (0.0--1.0) \\
+\texttt{valence}            & float   & Musical positiveness (0.0--1.0) \\
+\texttt{acousticness}       & float   & Confidence the track is acoustic (0.0--1.0) \\
+\texttt{instrumentalness}   & float   & Likelihood of no vocal content (0.0--1.0) \\
+\texttt{speechiness}        & float   & Presence of spoken words (0.0--1.0) \\
+\texttt{tempo}              & float   & Estimated tempo in BPM (60--220) \\
+\texttt{loudness}           & float   & Overall loudness in dB ($-30$ to 0) \\
+\texttt{duration\_ms}       & integer & Track duration in milliseconds (120k--360k) \\
+\bottomrule
+\end{longtable}
+
+\subsection{Supported Genres}
+\label{sec:genres}
+
+The dataset spans 10 music genres with the following generation probabilities:
+
+\begin{table}[H]
+\centering
+\caption{Genre Distribution in Generated Data}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Genre} & \textbf{Probability} & \textbf{Expected Count} \\
+\midrule
+Pop         & 18\% & 900 \\
+Hip-Hop     & 15\% & 750 \\
+Rock        & 12\% & 600 \\
+Electronic  & 10\% & 500 \\
+R\&B        & 10\% & 500 \\
+Latin       & 10\% & 500 \\
+Indie       &  8\% & 400 \\
+Country     &  7\% & 350 \\
+Jazz        &  5\% & 250 \\
+Classical   &  5\% & 250 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Data Generation Algorithm}
+
+Each track's audio features are sampled from genre-specific Gaussian distributions. The generation process follows these steps:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Genre assignment}: Randomly selected according to the probability distribution in the table above.
+    \item \textbf{Feature sampling}: For each audio feature $f$, a value is drawn from $\mathcal{N}(\mu_{g,f}, \sigma_{g,f})$ where $g$ is the genre. Values are clamped to their valid ranges.
+    \item \textbf{Artist assignment}: Randomly selected from a pool of 10 real artists per genre.
+    \item \textbf{Track name generation}: Composed of 1--3 randomly chosen words from a 40-word vocabulary.
+    \item \textbf{Popularity computation}: Calculated using a weighted formula with noise:
+\end{enumerate}
+
+The popularity formula is:
+\[
+    \text{pop} = \text{clamp}\Big(
+        0.3 \cdot d + 0.2 \cdot e + 0.15 \cdot v + 0.1 \cdot (1 - a)
+        + \frac{y - 1990}{34} \cdot 0.15
+        + \epsilon
+    \,,\; 0 \,,\; 1\Big)
+\]
+
+where:
+\begin{itemize}[noitemsep]
+    \item $d$ = danceability, $e$ = energy, $v$ = valence, $a$ = acousticness
+    \item $y$ = release year
+    \item $\epsilon \sim \mathcal{N}(0, 0.12)$ adds realistic noise
+    \item The result is scaled to 0--100 integer range
+\end{itemize}
+
+\subsection{Genre-Specific Feature Distributions}
+
+Table~\ref{tab:genre-params} shows the mean ($\mu$) and standard deviation ($\sigma$) for key audio features per genre.
+
+\begin{longtable}{@{}l*{6}{c}@{}}
+\caption{Genre Audio Feature Parameters ($\mu, \sigma$)} \label{tab:genre-params} \\
+\toprule
+\textbf{Genre} & \textbf{Dance.} & \textbf{Energy} & \textbf{Valence} & \textbf{Acoust.} & \textbf{Instrum.} & \textbf{Speech.} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Genre} & \textbf{Dance.} & \textbf{Energy} & \textbf{Valence} & \textbf{Acoust.} & \textbf{Instrum.} & \textbf{Speech.} \\
+\midrule
+\endhead
+Pop        & .65, .12 & .70, .12 & .55, .18 & .20, .15 & .02, .03 & .08, .05 \\
+Rock       & .50, .13 & .78, .12 & .45, .20 & .15, .12 & .05, .07 & .05, .03 \\
+Hip-Hop    & .75, .10 & .65, .14 & .50, .20 & .12, .10 & .01, .02 & .18, .10 \\
+Electronic & .72, .11 & .80, .10 & .40, .20 & .05, .05 & .30, .25 & .07, .05 \\
+R\&B       & .68, .12 & .55, .15 & .50, .20 & .30, .18 & .02, .03 & .10, .06 \\
+Latin      & .78, .10 & .72, .12 & .65, .18 & .18, .14 & .02, .03 & .09, .05 \\
+Country    & .55, .12 & .60, .14 & .58, .20 & .40, .20 & .01, .02 & .04, .03 \\
+Jazz       & .45, .15 & .40, .18 & .45, .22 & .65, .20 & .25, .25 & .05, .04 \\
+Indie      & .52, .14 & .58, .16 & .42, .22 & .35, .22 & .10, .15 & .05, .04 \\
+Classical  & .25, .12 & .25, .15 & .30, .20 & .90, .08 & .85, .12 & .04, .02 \\
+\bottomrule
+\end{longtable}
+
+% =============================================================================
+\section{Dashboard Architecture}
+% =============================================================================
+
+\subsection{Application Flow}
+
+The dashboard follows a reactive data-flow architecture provided by Streamlit:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Data Loading}: CSV is loaded once via \texttt{@st.cache\_data} for performance.
+    \item \textbf{User Input}: Sidebar widgets collect filter parameters (genres, year range, popularity range).
+    \item \textbf{Data Filtering}: A boolean mask is applied to produce the filtered DataFrame.
+    \item \textbf{Visualization}: Nine tabs render interactive Plotly charts from the filtered data.
+    \item \textbf{Re-execution}: Any widget change triggers a full re-run with cached data.
+\end{enumerate}
+
+\subsection{Data Source Selection}
+
+The sidebar begins with a data source selector offering four modes:
+
+\begin{table}[H]
+\centering
+\caption{Data Source Options}
+\begin{tabular}{@{}lp{8cm}@{}}
+\toprule
+\textbf{Source} & \textbf{Description} \\
+\midrule
+Bundled Dataset & Uses the pre-generated \texttt{data/spotify\_data.csv} (5{,}000 tracks). Default option. \\
+Kaggle Dataset  & Downloads any public dataset from \url{https://www.kaggle.com/datasets} via \texttt{kagglehub}. Accepts a dataset slug (e.g., \texttt{maharshipandya/spotify-tracks-dataset}) or a full Kaggle URL. If the dataset contains multiple CSV files, the user selects which one to load. \\
+Spotify API     & Connects to the Spotify Web API in real time via \texttt{spotipy}. Supports three retrieval modes: Playlist, Search, and Artist Discography (see Section~\ref{sec:spotify-api}). \\
+Upload CSV      & Drag-and-drop or browse for a local CSV file. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For Kaggle and uploaded datasets, the app applies an automatic column mapping and normalization pipeline (see Section~\ref{sec:column-mapping}).
+
+\subsection{Sidebar Controls}
+
+\begin{table}[H]
+\centering
+\caption{Sidebar Filter Widgets}
+\begin{tabular}{@{}llp{5.5cm}@{}}
+\toprule
+\textbf{Widget} & \textbf{Type} & \textbf{Description} \\
+\midrule
+Genre Filter     & Multiselect & Select one or more genres (default: all). Hidden if no genre column detected. \\
+Release Year     & Range Slider & Filter tracks by release year. Hidden if no year column detected. \\
+Popularity       & Range Slider & Filter by popularity score 0--100 (default: full range). Hidden if no popularity column. \\
+Column Mapping   & Expander & Shows which audio features were auto-mapped and which are missing (external datasets only). \\
+Tracks Shown     & Metric & Displays count of tracks matching current filters \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Tab Layout and Visualizations}
+
+The dashboard contains nine tabs, each serving a distinct analytical purpose.
+
+\subsubsection{Tab 1: Overview}
+
+Provides a high-level summary of the filtered dataset.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{KPI Cards} (4 columns): Total Tracks, Average Popularity, Average Danceability, Average Energy
+    \item \textbf{Popularity Histogram}: Stacked histogram of popularity scores colored by genre (30 bins)
+    \item \textbf{Genre Pie Chart}: Proportional breakdown of tracks by genre
+\end{itemize}
+
+\subsubsection{Tab 2: Correlations}
+
+Reveals relationships between audio features and popularity.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Correlation Heatmap}: $9 \times 9$ matrix (8 audio features + popularity) using Plotly \texttt{imshow} with RdBu\_r color scale, annotated with correlation coefficients
+    \item \textbf{Insight Box}: Automatically identifies and reports the strongest positive and negative correlations with popularity
+\end{itemize}
+
+\subsubsection{Tab 3: Scatter Explorer}
+
+Enables free-form exploration of feature relationships.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Controls}: Three dropdowns for X-axis feature, Y-axis feature, and color variable (genre, popularity, or release year)
+    \item \textbf{Scatter Plot}: Interactive Plotly scatter with hover tooltips showing track name, artist, and popularity
+    \item Point opacity set to 0.6 with marker size 5 for readability at 5{,}000 points
+\end{itemize}
+
+\subsubsection{Tab 4: Genre Comparison}
+
+Compares audio profiles across genres.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Grouped Bar Chart}: Mean values of 0--1 scale features (danceability, energy, valence, acousticness, instrumentalness, speechiness) grouped by genre
+    \item \textbf{Radar Chart}: Polar plot overlaying selected genres' feature profiles with fill. User selects which genres to compare via a multiselect widget
+    \item \textbf{Horizontal Bar Chart}: Average popularity by genre, color-mapped with Viridis scale
+\end{itemize}
+
+\subsubsection{Tab 5: Trends Over Time}
+
+Tracks how audio features and popularity have evolved from 1990 to 2024.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Feature Trend Lines}: Multi-line chart of user-selected features averaged per release year (default: danceability, energy, popularity)
+    \item \textbf{Genre Popularity Trend}: Line chart showing average popularity over time, one line per genre
+\end{itemize}
+
+\subsubsection{Tab 6: Top Tracks}
+
+A filterable, sortable data table.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Sort Selector}: Dropdown to choose the ranking column (default: popularity)
+    \item \textbf{Count Slider}: Select how many tracks to display (10--100, default 25)
+    \item \textbf{Data Table}: Full-width Streamlit dataframe showing track name, artist, genre, release year, popularity, and all audio features
+\end{itemize}
+
+\subsubsection{Tab 7: Clustering}
+
+Applies unsupervised machine learning to identify natural groupings of tracks in audio feature space using scikit-learn.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Feature Selector}: Multiselect to choose which audio features (and optionally popularity) to include in clustering. Defaults to all 0--1 scale features.
+    \item \textbf{Algorithm Toggle}: Radio button to switch between K-Means and DBSCAN.
+    \item \textbf{K-Means Controls}: Slider for number of clusters $k$ (2--10, default 4).
+    \item \textbf{DBSCAN Controls}: Sliders for epsilon (0.1--3.0, default 0.8) and minimum samples (2--20, default 5). Also displays a noise point count metric.
+    \item \textbf{Cluster Scatter Plot}: Interactive Plotly scatter colored by cluster assignment. Users select X and Y axes from the clustering features.
+    \item \textbf{Cluster Profiles Table}: Mean feature values per cluster displayed in a formatted DataFrame.
+    \item \textbf{Cluster Profile Bar Chart}: Grouped bar chart comparing mean feature values across clusters.
+    \item \textbf{Popularity by Cluster}: Box plot showing the popularity distribution within each cluster (shown only when popularity data is available).
+\end{itemize}
+
+\textbf{Implementation details:}
+\begin{itemize}[noitemsep]
+    \item All selected features are standardized via \texttt{StandardScaler} before clustering to ensure equal feature weighting regardless of original scale.
+    \item Rows with missing values in the selected features are dropped before fitting.
+    \item K-Means uses \texttt{n\_init=10} and \texttt{random\_state=42} for reproducibility.
+    \item DBSCAN labels noise points as cluster ``$-1$'', which are included in the scatter plot for transparency.
+\end{itemize}
+
+\subsubsection{Tab 8: PCA}
+
+Applies Principal Component Analysis (PCA) via scikit-learn to reduce the high-dimensional audio feature space to 2D or 3D for visual exploration.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Feature Selector}: Multiselect to choose which audio features (and optionally popularity) to include. Defaults to all available audio features. Requires at least 3 features.
+    \item \textbf{Projection Toggle}: Radio button to switch between 2D and 3D projections.
+    \item \textbf{Color Selector}: Dropdown to color points by genre, popularity, release year, or cluster assignment (if clustering has been run in Tab~7).
+    \item \textbf{2D Scatter Plot}: Interactive Plotly scatter of PC1 vs PC2 with hover tooltips showing track name, artist, and popularity. Axis labels include the percentage of variance explained by each component.
+    \item \textbf{3D Scatter Plot}: Interactive Plotly 3D scatter of PC1/PC2/PC3 with rotation and zoom controls.
+    \item \textbf{Explained Variance Metrics}: KPI cards showing the variance explained by each principal component (PC1, PC2, and optionally PC3).
+    \item \textbf{Variance Bar Chart}: Bar chart displaying the variance explained by each component with percentage labels.
+    \item \textbf{Feature Loadings Table}: DataFrame showing how each original feature maps onto the principal components, formatted to 3 decimal places.
+    \item \textbf{Loadings Heatmap}: Annotated heatmap (RdBu\_r color scale, $-1$ to $+1$) showing the contribution of each original feature to each principal component. This reveals which audio features drive separation along each axis.
+\end{itemize}
+
+\textbf{Implementation details:}
+\begin{itemize}[noitemsep]
+    \item All selected features are standardized via \texttt{StandardScaler} before PCA to prevent features with larger scales (e.g., tempo) from dominating.
+    \item Rows with missing values are dropped before fitting.
+    \item The PCA loadings matrix (\texttt{pca\_model.components\_.T}) maps original features to principal components, enabling interpretation of what each PC represents musically.
+    \item When the clustering tab has been used, cluster labels are available as a color option, enabling visual assessment of whether clusters separate cleanly in reduced-dimensional space.
+\end{itemize}
+
+\subsubsection{Tab 9: Predictive Modeling}
+
+Trains a regression model to predict track popularity from audio features, providing both evaluation metrics and an interactive prediction tool.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Feature Selector}: Multiselect to choose which audio features to use as predictors. Defaults to all available features.
+    \item \textbf{Model Selector}: Dropdown with three algorithms:
+    \begin{itemize}[noitemsep]
+        \item \textbf{Random Forest} --- ensemble of decision trees with configurable tree count (50--500)
+        \item \textbf{Gradient Boosting} --- sequential boosting with configurable tree count (50--500) and learning rate (0.01--0.3)
+        \item \textbf{Linear Regression} --- ordinary least squares baseline
+    \end{itemize}
+    \item \textbf{Train/Test Split}: Slider to configure the test set percentage (10--40\%, default 20\%).
+    \item \textbf{Performance Metrics} (4 KPI cards): $R^2$ (Train), $R^2$ (Test), MAE (Test), RMSE (Test).
+    \item \textbf{Actual vs Predicted Scatter}: Test-set predictions plotted against actual values with a diagonal reference line. Points near the line indicate accurate predictions.
+    \item \textbf{Residual Histogram}: Distribution of prediction errors (actual $-$ predicted) to assess bias and variance.
+    \item \textbf{Feature Importance}: Horizontal bar chart showing each feature's contribution to the model. Uses \texttt{feature\_importances\_} for tree-based models and absolute coefficients for linear regression.
+    \item \textbf{Interactive Prediction Tool}: Sliders for each audio feature (initialized to dataset means) that feed into the trained model in real time, displaying the predicted popularity score.
+\end{itemize}
+
+\textbf{Implementation details:}
+\begin{itemize}[noitemsep]
+    \item All features are standardized via \texttt{StandardScaler} before training. The scaler is fit on training data only and applied to test data to prevent data leakage.
+    \item Train/test splitting uses \texttt{random\_state=42} for reproducibility.
+    \item Rows with missing values in selected features or popularity are dropped before splitting.
+    \item A minimum of 20 data points is required to train a model; fewer triggers a warning.
+    \item The interactive prediction tool reuses the same scaler fitted during training, ensuring consistency between evaluation and inference.
+    \item Predicted values are clamped to the 0--100 range for display.
+\end{itemize}
+
+% =============================================================================
+\section{Kaggle Integration}
+% =============================================================================
+
+\subsection{Dataset Download via kagglehub}
+
+The dashboard uses the \texttt{kagglehub} library to download public datasets directly from Kaggle. Users can provide either:
+
+\begin{itemize}[noitemsep]
+    \item A dataset slug: \texttt{maharshipandya/spotify-tracks-dataset}
+    \item A full Kaggle URL: \texttt{https://www.kaggle.com/datasets/maharshipandya/spotify-tracks-dataset}
+\end{itemize}
+
+The URL is automatically parsed to extract the slug. Downloads are cached by Streamlit so repeated access is instant.
+
+\begin{lstlisting}[style=pythonstyle, caption={Kaggle dataset download}]
+@st.cache_data(show_spinner="Downloading from Kaggle...")
+def download_kaggle_dataset(slug):
+    import kagglehub
+    path = kagglehub.dataset_download(slug)
+    return path
+\end{lstlisting}
+
+\textbf{Authentication:} Kaggle credentials must be configured via one of:
+\begin{itemize}[noitemsep]
+    \item Environment variables: \texttt{KAGGLE\_USERNAME} and \texttt{KAGGLE\_KEY}
+    \item Config file: \texttt{\textasciitilde/.kaggle/kaggle.json}
+\end{itemize}
+
+If a downloaded dataset contains multiple CSV files, the user selects which file to load via a sidebar dropdown.
+
+\subsection{Automatic Column Mapping}
+\label{sec:column-mapping}
+
+External datasets (Kaggle or uploaded) rarely use identical column names. The \texttt{auto\_map\_columns()} function maps common column name variants to the expected schema using a case-insensitive alias table:
+
+\begin{longtable}{@{}lp{8cm}@{}}
+\caption{Column Name Alias Mapping} \\
+\toprule
+\textbf{Target Column} & \textbf{Recognized Aliases} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Target Column} & \textbf{Recognized Aliases} \\
+\midrule
+\endhead
+\texttt{track\_name}      & track\_name, name, song\_name, song, title, track \\
+\texttt{artist}           & artist, artist\_name, artists, performer \\
+\texttt{genre}            & genre, track\_genre, top genre, music\_genre, category \\
+\texttt{release\_year}    & release\_year, year, release\_date, released\_year \\
+\texttt{popularity}       & popularity, track\_popularity, pop, score \\
+\texttt{danceability}     & danceability, danceability\_\% \\
+\texttt{energy}           & energy, energy\_\% \\
+\texttt{valence}          & valence, valence\_\% \\
+\texttt{acousticness}     & acousticness, acousticness\_\% \\
+\texttt{instrumentalness} & instrumentalness, instrumentalness\_\% \\
+\texttt{speechiness}      & speechiness, speechiness\_\% \\
+\texttt{tempo}            & tempo, bpm \\
+\texttt{loudness}         & loudness, loudness\_db \\
+\texttt{duration\_ms}     & duration\_ms, duration, length \\
+\bottomrule
+\end{longtable}
+
+\subsection{Data Normalization Pipeline}
+
+After column mapping, the \texttt{prepare\_dataframe()} function applies these transformations:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Percent normalization}: Features with values $> 1.0$ (e.g., \texttt{danceability\_\%} stored as 0--100) are divided by 100 to produce 0--1 scale values. Tempo and loudness are excluded.
+    \item \textbf{Year extraction}: If the release year column contains full dates (e.g., \texttt{2023-05-12}), a 4-digit year is extracted via regex. Non-parseable rows are dropped.
+    \item \textbf{Genre fallback}: If no genre column exists, a default \texttt{"unknown"} genre is assigned. Existing genres are lowercased and stripped.
+    \item \textbf{Type coercion}: Popularity is cast to integer; all audio features are coerced to numeric with errors set to NaN.
+\end{enumerate}
+
+\subsection{Graceful Degradation}
+
+All visualization tabs adapt to the available columns (applies to all external sources: Kaggle, Spotify API, and uploaded CSVs). If a dataset lacks certain features:
+\begin{itemize}[noitemsep]
+    \item Missing KPI cards are hidden
+    \item Correlation matrix uses only the features present
+    \item Scatter explorer offers only available features in dropdowns
+    \item Genre comparison and trends tabs show warnings if required columns are absent
+    \item The Column Mapping Info expander reports which features were mapped and which are missing
+\end{itemize}
+
+% =============================================================================
+\section{Spotify Web API Integration}
+\label{sec:spotify-api}
+% =============================================================================
+
+The dashboard connects to the Spotify Web API in real time using the \texttt{spotipy} library (v2.23.0). This enables users to pull live track metadata and audio features directly from Spotify without pre-downloading any dataset.
+
+\subsection{Authentication}
+
+The Spotify Web API uses OAuth 2.0 Client Credentials flow, which requires:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Client ID} --- obtained from the Spotify Developer Dashboard
+    \item \textbf{Client Secret} --- obtained from the same dashboard
+\end{itemize}
+
+Both are entered in the sidebar as password-masked text inputs. The credentials are passed to \texttt{spotipy.SpotifyClientCredentials} to obtain an access token automatically.
+
+\begin{lstlisting}[style=pythonstyle, caption={Spotify client initialization}]
+def get_spotify_client(client_id, client_secret):
+    import spotipy
+    from spotipy.oauth2 import SpotifyClientCredentials
+    auth_manager = SpotifyClientCredentials(
+        client_id=client_id,
+        client_secret=client_secret,
+    )
+    return spotipy.Spotify(auth_manager=auth_manager)
+\end{lstlisting}
+
+\textbf{How to obtain credentials:}
+\begin{enumerate}[noitemsep]
+    \item Visit \url{https://developer.spotify.com/dashboard}
+    \item Create a new application (no redirect URI needed for Client Credentials flow)
+    \item Copy the Client ID and Client Secret into the dashboard sidebar
+\end{enumerate}
+
+\subsection{Retrieval Modes}
+
+The Spotify API data source offers three retrieval modes, each targeting a different use case.
+
+\subsubsection{Playlist URL/ID}
+
+Loads all tracks from a Spotify playlist. The user provides either:
+\begin{itemize}[noitemsep]
+    \item A full URL: \texttt{https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M}
+    \item A Spotify URI: \texttt{spotify:playlist:37i9dQZF1DXcBWIGoYBM5M}
+    \item A bare playlist ID: \texttt{37i9dQZF1DXcBWIGoYBM5M}
+\end{itemize}
+
+The implementation uses pagination to handle playlists of any length, fetching tracks in batches via \texttt{sp.playlist\_tracks()} and following \texttt{next} links. Audio features are retrieved in batches of 100 via \texttt{sp.audio\_features()}.
+
+\begin{lstlisting}[style=pythonstyle, caption={Playlist track retrieval (simplified)}]
+results = sp.playlist_tracks(playlist_id)
+tracks = results["items"]
+while results["next"]:
+    results = sp.next(results)
+    tracks.extend(results["items"])
+\end{lstlisting}
+
+\subsubsection{Search Tracks}
+
+Searches Spotify's catalog using free-text queries. Supports Spotify's search syntax including field filters:
+
+\begin{itemize}[noitemsep]
+    \item \texttt{genre:pop year:2023} --- pop tracks from 2023
+    \item \texttt{artist:Drake} --- tracks by Drake
+    \item \texttt{track:Blinding Lights} --- specific song search
+\end{itemize}
+
+Returns up to 50 results (Spotify API limit per request). A slider allows the user to set the desired result count.
+
+\subsubsection{Artist Discography}
+
+Retrieves an artist's full catalog by:
+\begin{enumerate}[noitemsep]
+    \item Searching for the artist by name (or parsing an artist URL)
+    \item Fetching up to $N$ albums/singles via \texttt{sp.artist\_albums()} (configurable, default 20)
+    \item Extracting all unique tracks from those albums via \texttt{sp.album\_tracks()}
+    \item Batch-fetching popularity scores via \texttt{sp.tracks()} (batches of 50)
+    \item Batch-fetching audio features via \texttt{sp.audio\_features()} (batches of 100)
+\end{enumerate}
+
+Track deduplication is performed using a \texttt{seen\_ids} set to avoid counting the same track from different albums (e.g., deluxe editions). The genre column is set to the artist's name, enabling comparison when multiple artist datasets are loaded in sequence.
+
+\subsection{API Data Pipeline}
+
+For all three modes, the retrieved data follows the same pipeline:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Metadata extraction}: Track name, artist(s), release date, popularity, and duration are extracted from the Spotify track objects.
+    \item \textbf{Audio feature retrieval}: The 8 standard audio features (danceability, energy, valence, acousticness, instrumentalness, speechiness, tempo, loudness) are fetched via the Audio Features endpoint in batches of 100.
+    \item \textbf{DataFrame assembly}: Metadata and audio features are concatenated column-wise into a single DataFrame.
+    \item \textbf{Normalization}: The standard \texttt{prepare\_dataframe()} pipeline (Section~\ref{sec:column-mapping}) is applied---year extraction from release dates, genre cleanup, and type coercion.
+\end{enumerate}
+
+\subsection{URL Parsing}
+
+A \texttt{parse\_spotify\_url()} utility automatically extracts the resource type and ID from various input formats:
+
+\begin{table}[H]
+\centering
+\caption{Supported Spotify Input Formats}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Format} & \textbf{Example} & \textbf{Parsed As} \\
+\midrule
+Web URL     & \texttt{https://open.spotify.com/playlist/ABC123} & playlist, ABC123 \\
+Spotify URI & \texttt{spotify:artist:XYZ789}                    & artist, XYZ789 \\
+Bare ID     & \texttt{37i9dQZF1DXcBWIGoYBM5M}                   & (inferred), ID \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Query parameters (e.g., \texttt{?si=...}) are automatically stripped from URLs.
+
+\subsection{Caching and Rate Limits}
+
+All Spotify API fetch functions are decorated with \texttt{@st.cache\_data(ttl=600)}, caching results for 10 minutes. This:
+
+\begin{itemize}[noitemsep]
+    \item Prevents redundant API calls during Streamlit re-runs triggered by filter changes
+    \item Respects Spotify's rate limits (the Client Credentials flow has generous limits for read-only access)
+    \item Automatically refreshes data after the 10-minute TTL expires
+\end{itemize}
+
+\subsection{Security Considerations}
+
+\begin{itemize}[noitemsep]
+    \item Client ID and Client Secret are entered via \texttt{type="password"} inputs, masking them in the UI
+    \item Credentials are never stored to disk or logged
+    \item The Client Credentials flow does not access any user-specific data---it only reads public catalog information
+    \item Credentials are passed directly to \texttt{spotipy} and never transmitted elsewhere
+\end{itemize}
+
+% =============================================================================
+\section{Key Code Design}
+% =============================================================================
+
+\subsection{Data Loading and Caching}
+
+Data is loaded once and cached across Streamlit re-runs. The bundled dataset uses a simple cached loader:
+
+\begin{lstlisting}[style=pythonstyle, caption={Cached data loading}]
+@st.cache_data
+def load_bundled_data():
+    return pd.read_csv("data/spotify_data.csv")
+\end{lstlisting}
+
+Kaggle downloads are also cached to avoid redundant network requests:
+
+\begin{lstlisting}[style=pythonstyle, caption={Cached Kaggle download}]
+@st.cache_data(show_spinner="Downloading from Kaggle...")
+def download_kaggle_dataset(slug):
+    import kagglehub
+    path = kagglehub.dataset_download(slug)
+    return path
+\end{lstlisting}
+
+\subsection{Filtering Pipeline}
+
+A boolean mask dynamically combines only the filters whose columns are present:
+
+\begin{lstlisting}[style=pythonstyle, caption={Adaptive data filtering}]
+mask = pd.Series(True, index=df.index)
+if selected_genres and "genre" in df.columns:
+    mask = mask & df["genre"].isin(selected_genres)
+if year_range is not None and "release_year" in df.columns:
+    mask = mask & df["release_year"].between(*year_range)
+if pop_range is not None and "popularity" in df.columns:
+    mask = mask & df["popularity"].between(*pop_range)
+filtered = df[mask]
+\end{lstlisting}
+
+\subsection{Correlation Analysis}
+
+The correlation matrix is computed on filtered data and visualized as an annotated heatmap:
+
+\begin{lstlisting}[style=pythonstyle, caption={Correlation heatmap}]
+corr = filtered[audio_features + ["popularity"]].corr()
+fig = px.imshow(
+    corr, text_auto=".2f",
+    color_continuous_scale="RdBu_r",
+    zmin=-1, zmax=1,
+)
+\end{lstlisting}
+
+\subsection{Radar Chart Construction}
+
+Genre profiles are rendered using Plotly's \texttt{Scatterpolar} trace:
+
+\begin{lstlisting}[style=pythonstyle, caption={Radar chart for genre comparison}]
+for g in selected_genres:
+    vals = genre_means.loc[g, features].tolist()
+    vals.append(vals[0])  # close the polygon
+    fig.add_trace(go.Scatterpolar(
+        r=vals,
+        theta=features + [features[0]],
+        fill="toself", name=g, opacity=0.6,
+    ))
+\end{lstlisting}
+
+% =============================================================================
+\section{Deployment and Execution}
+% =============================================================================
+
+\subsection{Prerequisites}
+
+\begin{itemize}[noitemsep]
+    \item Python 3.7 or later
+    \item All dependencies installed to \texttt{<pkg\_install\_path>}
+\end{itemize}
+
+\subsection{Installation}
+
+\begin{lstlisting}[language=bash, style=pythonstyle, caption={Package installation}]
+pip install --target=<pkg_install_path> \
+    streamlit pandas plotly numpy scikit-learn kagglehub spotipy
+\end{lstlisting}
+
+\subsection{Data Generation}
+
+\begin{lstlisting}[language=bash, style=pythonstyle, caption={Generate synthetic dataset}]
+setenv PYTHONPATH <pkg_install_path>
+python generate_data.py
+\end{lstlisting}
+
+This produces \texttt{data/spotify\_data.csv} with 5{,}000 records.
+
+\subsection{Running the Dashboard}
+
+\begin{lstlisting}[language=bash, style=pythonstyle, caption={Launch the dashboard}]
+setenv PATH <pkg_install_path>/bin:${PATH}
+setenv PYTHONPATH <pkg_install_path>
+cd <project_directory>
+streamlit run app.py
+\end{lstlisting}
+
+The dashboard will be available at \texttt{http://localhost:8501} by default.
+
+% =============================================================================
+\section{Design Decisions and Trade-offs}
+% =============================================================================
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Synthetic vs. Real Data}: A synthetic dataset was chosen to avoid API key requirements and Kaggle download dependencies. The genre-specific Gaussian distributions produce realistic feature relationships.
+
+    \item \textbf{Popularity Formula}: The weighted linear model with noise ensures meaningful correlations exist in the data while maintaining realistic variance. Danceability has the highest weight (0.3) reflecting real-world trends.
+
+    \item \textbf{Plotly over Matplotlib}: Plotly was selected for its native interactivity (hover, zoom, pan) which integrates seamlessly with Streamlit's \texttt{plotly\_chart} component.
+
+    \item \textbf{Caching Strategy}: \texttt{@st.cache\_data} ensures the CSV is read only once per session, providing fast re-renders when filters change.
+
+    \item \textbf{Tempo and Loudness Exclusion from Radar}: These features use different scales (BPM and dB) than the 0--1 normalized features, so they are excluded from the radar chart to maintain visual consistency.
+
+    \item \textbf{Year Range Default}: The default year filter starts at 2000 (not 1990) to focus on the most data-rich and relevant period while still allowing exploration of older tracks.
+\end{enumerate}
+
+% =============================================================================
+\section{Future Enhancements}
+% =============================================================================
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Export Functionality}: Add download buttons for filtered data and chart images
+\end{itemize}
+
+\end{document}
